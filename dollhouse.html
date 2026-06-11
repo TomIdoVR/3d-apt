@@ -633,21 +633,25 @@ beanBag(4.9, 2.9, 0.95);
   const neonTex = ctex(256, 160, (g)=>{
     g.clearRect(0,0,256,160);
     g.font = '700 58px Courier, monospace'; g.textAlign='center'; g.textBaseline='middle';
-    g.shadowColor = '#39b6ff'; g.shadowBlur = 24;
-    g.strokeStyle = '#bfeaff'; g.lineWidth = 4;
+    g.shadowColor = '#0099ff'; g.shadowBlur = 22;
+    g.strokeStyle = '#0fb0ff'; g.lineWidth = 7;
     g.strokeText('GAME', 128, 48); g.strokeText('ON', 128, 116);
-    g.shadowBlur = 0; g.fillStyle = '#e6f7ff';
+    g.shadowBlur = 0; g.strokeStyle = '#bfeaff'; g.lineWidth = 3;
+    g.strokeText('GAME', 128, 48); g.strokeText('ON', 128, 116);
+    g.fillStyle = '#eafaff';
     g.fillText('GAME', 128, 48); g.fillText('ON', 128, 116);
   });
+  const board = rbox(1.72, 1.14, 0.06, mat({ color:0x16161a, roughness:.55 }), 0.02);
+  put(scene, board, -8.97, 2.1, 1.7, Math.PI/2); board.castShadow = true;
   const neon = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.94),
     new THREE.MeshBasicMaterial({ map:neonTex, transparent:true, depthWrite:false }));
-  neon.rotation.y = Math.PI/2; put(scene, neon, -8.95, 2.1, 1.7);
-  const neonL = new THREE.PointLight(0x39b6ff, 8, 4, 2);
-  neonL.position.set(-8.4, 2.1, 1.7); scene.add(neonL);
+  put(scene, neon, -8.93, 2.1, 1.7, Math.PI/2);
+  const neonL = new THREE.PointLight(0x39b6ff, 3, 3, 2);
+  neonL.position.set(-8.3, 2.1, 1.7); scene.add(neonL);
   tick(t => {
     const flick = Math.random() < 0.012 ? 0.4 : 1;
     neon.material.opacity = (0.92 + 0.08*Math.sin(t*3.1))*flick;
-    neonL.intensity = 8*flick;
+    neonL.intensity = 3*flick;
   });
 
   const gmat = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 4.2), mat({ color:0x3a3a40, roughness:1 }));
@@ -672,19 +676,57 @@ beanBag(4.9, 2.9, 0.95);
   bike(-6.3, -2.0, 0.5);
   bike(-5.2, -3.0, 0.35);
 
-  const rack = new THREE.Group();
   const rm = mat({ color:0x2a2a30, roughness:.45, metalness:.55 });
-  for(const [rx,rz] of [[-0.6,-0.4],[0.6,-0.4],[-0.6,0.4],[0.6,0.4]])
-    put(rack, box(0.07, 2.2, 0.07, rm), rx, 1.1, rz);
-  put(rack, box(1.27, 0.07, 0.07, rm), 0, 2.16, -0.4);
-  put(rack, box(1.27, 0.07, 0.07, rm), 0, 2.16, 0.4);
-  const barbell = cyl(0.022,0.022,1.9, mat({ color:0xa8a8b0, metalness:.9, roughness:.2 }));
-  barbell.rotation.z = Math.PI/2; barbell.position.set(0, 1.45, 0.4); rack.add(barbell);
-  for(const s of [-0.8, 0.8]){
-    const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.05,20), mat({ color:0x1c1c20, roughness:.5 }));
-    plate.rotation.z = Math.PI/2; plate.position.set(s, 1.45, 0.4); rack.add(plate);
+
+  /* TONAL — wall-mounted smart gym on the LEFT wall, directly opposite the screen */
+  {
+    const tonal = new THREE.Group();
+    /* sleek vertical panel */
+    const body = rbox(0.6, 1.32, 0.1, mat({ color:0x101013, roughness:.25, metalness:.3, envMapIntensity:.9 }), 0.035);
+    put(tonal, body, 0, 1.55, 0.05);
+    /* glowing display strip */
+    const dispTex = ctex(96, 256, (c)=>{
+      const gr = c.createLinearGradient(0,0,0,256);
+      gr.addColorStop(0,'#0c0e12'); gr.addColorStop(1,'#11151c');
+      c.fillStyle = gr; c.fillRect(0,0,96,256);
+      c.strokeStyle = '#2dd4bf'; c.lineWidth = 5;
+      c.beginPath(); c.arc(48, 70, 26, -Math.PI/2, Math.PI*0.9); c.stroke();
+      c.strokeStyle = '#27313e'; c.beginPath(); c.arc(48, 70, 26, Math.PI*0.9, Math.PI*1.5); c.stroke();
+      c.fillStyle = '#e8f6f4'; c.font = '700 15px sans-serif'; c.textAlign = 'center';
+      c.fillText('45 lb', 48, 76);
+      for(let i=0;i<5;i++){
+        c.fillStyle = i<3 ? '#2dd4bf' : '#27313e';
+        c.fillRect(20, 118 + i*16, 56, 7);
+      }
+      c.fillStyle = '#f2f5f6'; c.font = '800 18px sans-serif';
+      c.fillText('TONAL', 48, 232);
+    });
+    put(tonal, new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.96), new THREE.MeshBasicMaterial({ map:dispTex })), 0, 1.62, 0.105);
+    /* pivoting arms with grip handles */
+    const armM = mat({ color:0x18181c, roughness:.35, metalness:.5 });
+    for(const s of [-1, 1]){
+      put(tonal, rbox(0.08, 0.22, 0.1, armM, 0.02), s*0.36, 1.5, 0.05);          // shoulder
+      const arm = cyl(0.026, 0.026, 0.6, armM);
+      arm.rotation.x = Math.PI/2; arm.rotation.z = s*0.12;
+      put(tonal, arm, s*0.42, 1.42, 0.36);
+      const elbow = sph(0.04, armM, 12); put(tonal, elbow, s*0.45, 1.4, 0.66);
+      const grip = cyl(0.022, 0.022, 0.16, mat({ color:0x3a3a40, roughness:.8 }));
+      grip.rotation.z = Math.PI/2; put(tonal, grip, s*0.45, 1.26, 0.7);
+      const cable = cyl(0.006, 0.006, 0.13, mat({ color:0x0a0a0a }));
+      put(tonal, cable, s*0.45, 1.33, 0.68);
+    }
+    put(scene, shadows(tonal), -8.94, 0, -1.0, Math.PI/2);
+    /* workout bench facing the Tonal */
+    const bench = new THREE.Group();
+    put(bench, rbox(1.1, 0.1, 0.34, mat({ color:0x1c1c20, roughness:.7 }), 0.03), 0, 0.45, 0);
+    put(bench, box(0.08, 0.4, 0.3, rm), -0.42, 0.2, 0);
+    put(bench, box(0.08, 0.4, 0.3, rm),  0.42, 0.2, 0);
+    put(scene, shadows(bench), -7.6, 0, -1.0);
+    /* small workout mat under the Tonal zone */
+    const tmat = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.8), mat({ color:0x34343a, roughness:1 }));
+    tmat.rotation.x = -Math.PI/2; tmat.position.set(-7.9, 0.013, -1.0); tmat.receiveShadow = true;
+    scene.add(tmat);
   }
-  put(scene, shadows(rack), -8.0, 0, -5.0, 0.15);
 
   const dr = new THREE.Group();
   put(dr, box(0.9, 0.05, 0.3, rm), 0, 0.35, 0);
@@ -703,21 +745,29 @@ beanBag(4.9, 2.9, 0.95);
 }
 
 /* ============ studio lighting ============ */
-scene.add(new THREE.AmbientLight(0xffffff, 0.45));
-scene.add(new THREE.HemisphereLight(0xdfe6f0, 0xb8a98e, 0.55));
+renderer.toneMappingExposure = 1.12;
+scene.add(new THREE.AmbientLight(0xf4f0ff, 0.28));
+scene.add(new THREE.HemisphereLight(0xdfe8f4, 0xc4b094, 0.75));
 {
-  const key = new THREE.DirectionalLight(0xfff2dd, 2.6);
-  key.position.set(10, 16, 12);
+  /* warm key — late-afternoon sun angle */
+  const key = new THREE.DirectionalLight(0xffeacd, 3.1);
+  key.position.set(12, 18, 14);
   key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.mapSize.set(4096, 4096);
   key.shadow.camera.left = -16; key.shadow.camera.right = 16;
   key.shadow.camera.top = 16;   key.shadow.camera.bottom = -16;
-  key.shadow.camera.far = 50;
-  key.shadow.bias = -0.0015;
+  key.shadow.camera.far = 60;
+  key.shadow.bias = -0.0008;
+  key.shadow.normalBias = 0.025;
   scene.add(key);
-  const fill = new THREE.DirectionalLight(0xdde6f4, 0.7);
-  fill.position.set(-12, 10, -8);
+  /* cool sky fill from the opposite side */
+  const fill = new THREE.DirectionalLight(0xcfdcf2, 0.55);
+  fill.position.set(-14, 9, -6);
   scene.add(fill);
+  /* rim light from behind for depth on furniture edges */
+  const rim = new THREE.DirectionalLight(0xbfd0ff, 0.5);
+  rim.position.set(-5, 12, -16);
+  scene.add(rim);
 }
 
 /* LED blue↔purple breathing */
